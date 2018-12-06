@@ -2,50 +2,107 @@ from __future__ import division
 import os
 import cv2
 import numpy as np
+import math
+
+def classify(normalized_contour):
+	#See if it is an outer edge comparing the distance between beginning and end w/
+	#the arc length.
+	normalized_contour = np.array(normalized_contour)
+	contour_length = cv2.arcLength(normalized_contour, False)
+	begin_end_distance = cv2.norm(normalized_contour[0]-normalized_contour[-1])
+	if(contour_length < begin_end_distance*1.3):        
+		return "OUTER_EDGE"
+	
+	#Find the minimum or maximum value for x in the normalized contour and base
+	#the classification on that
+	minx  = 100000000
+	maxx = -100000000
+	for x, y in normalized_contour:
+		if(minx > x):
+			minx = x
+		if(maxx < x):
+			maxx = x 
+	
+	if(abs(minx) > abs(maxx)):
+		return "TAB"
+	else:
+		return "HOLE"
+
+
+def normalize(cont):
+	ret_contour = []
+	a = cont[0][0]
+	b = cont[-1][0]
+
+	#Calculating angle from vertical
+	b = (b[0] - a[0],b[1] - a[1])
+	
+	theta = math.acos(b[1]/(cv2.norm(b)));
+	if(b[0] < 0):
+		theta = -theta
+	
+	#Theta is the angle every point needs rotated.
+	#and -a is the translation
+	for p in cont:
+		p = p[0]
+		#Apply translation
+		temp_point = (p[0]-a[0],p[1]-a[1])
+		#Apply roatation
+		new_x = math.cos(theta) * temp_point[0] - math.sin(theta) * temp_point[1]
+		new_y = math.sin(theta) * temp_point[0] + math.cos(theta) * temp_point[1]
+		ret_contour.append((new_x, new_y))
+	
+	return ret_contour
+
+def create_edge(contour, start, end):
+	#original
+	contour_edge = contour[start:end]
+	#Normalized contours are used for comparisons
+	normalized_contour = normalize(contour_edge)
+	reverse_contour = contour_edge[::-1]
+	#same as normalized contour, but flipped 180 degrees
+	reverse_normalized_contour = normalize(reverse_contour)
+	type = classify(normalized_contour)
+
+def rotate(myList, pos): 
+	return np.concatenate((myList[pos:], myList[:pos]), axis=0)
 
 #This function takes in the beginning and ending of one vector, and returns
 #an iterator representing the point where the first item in the second vector is.
 def find_first_in(contour, corners):
-	i = 0
-	while (i < len(contour)):
-		i += 1
-		j = 0
-		while (j < len(corners)):
-			j += 1
-			if ( contour[i][0] == corners[j][0] and contour[i][1] == corners[j][1]):
+	for i in range(len(contour)):	
+		for j in range(len(corners)):
+			if ( contour[i][0][0] == corners[j][0][0] and contour[i][0][1] == corners[j][0][1]):
 				return i
 	return len(contour)
 
 #This returns iterators from the first vector where the value is equal places in the second vector.
 def find_all_in(contour, corners):
 	places = []
-	i = 0
-	while (i < len(contour)):
-		i += 1
-		j = 0
-		while (j < len(corners)):
-			j += 1
-			if ( contour[i][0] == corners[j][0] and contour[i][1] == corners[j][1]):
+	for i in range(len(contour)):
+		for j in range(len(corners)):
+			if ( contour[i][0][0] == corners[j][0][0] and contour[i][0][1] == corners[j][0][1]):
 				places.append(i)
 	return places
 
 def remove_duplicates(vec):
+	vec = vec.tolist()
 	dupes_found = True;
 	while(dupes_found):
-		dupes_found=False;
-		dup_at=-1;
+		dupes_found = False;
+		dup_at = -1;
 		for i in range(len(vec)):
 			for j in range(len(vec)):                    
 				if(j==i):
-					continue                
-				if(vec[i] == vec[j]):
+					continue          
+				if(vec[i][0][0] == vec[j][0][0] and vec[i][0][1] == vec[j][0][1]):
 					dup_at = j
 					dupes_found = True;
-					vec.erase(vec.begin()+j)
+					del vec[j]
 					break
 			if(dupes_found):
 				break
-	return vec
+	return  np.array(vec)
 
 #Euclidian distance between 2 points.
 def distance(a, b):
@@ -79,7 +136,7 @@ def extract_edges(bw, corners):
 
 
 	#We need the begining of the vector to correspond to the begining of an edge.
-	std::rotate(contour.begin(),find_first_in(contour, corners),contour.end());
+	contour = rotate(contour, find_first_in(contour, corners));
 	
 	#assert(corners[0]!=corners[1] && corners[0]!=corners[2] && corners[0]!=corners[3] && corners[1]!=corners[2] &&
 	#       corners[1]!=corners[3] && corners[2]!=corners[3]);
@@ -89,19 +146,21 @@ def extract_edges(bw, corners):
 	#std::vector<std::vector<cv::Point>::iterator> sections;
 	sections = find_all_in(contour, corners)
 
+
 	#Make corners go in the correct order    
 	for i in range(4):
-		corners[i]=*sections[i];
+		corners[i]*=sections[i];
 	
 
 	
 	#assert(corners[1]!=corners[0] && corners[0]!=corners[2] && corners[0]!=corners[3] && corners[1]!=corners[2] &&
 	#       corners[1]!=corners[3] && corners[2]!=corners[3]);
 	
-	edges[0] = edge((sections[0],sections[1]));
-	edges[1] = edge((sections[1],sections[2]));
-	edges[2] = edge((sections[2],sections[3]));
-	edges[3] = edge((sections[3],contour.end()));
+	edge1 = create_edge(contour, sections[0], sections[1])
+	edge2 = create_edge(contour, sections[1], sections[2])
+	edge3 = create_edge(contour, sections[2], sections[3])
+	edge4 = create_edge(contour, sections[3], len(contour))
+	return (edge1, edge2, edge3, edge4)
 
 
 def draw_points(image, points, color = [0,0,255]):
@@ -154,7 +213,8 @@ def create_piece(color, black_and_white, estimated_piece_size):
 	#corners_image = draw_points(color, corners)
 	#cv2.imshow("corners_image",corners_image)
 	#cv2.waitKey(0)	
-	extract_edges(black_and_white, corners);
+	edges = extract_edges(black_and_white, corners);
+	print edges
 	#classify();
 	return (color, black_and_white, estimated_piece_size)
 
@@ -240,4 +300,4 @@ def puzzle(folderpath, estimated_piece_size, thresh, filter = True):
 
 
 if __name__ == "__main__":	
-	pieces = puzzle("pieces", 380,  50)
+	pieces = puzzle("Scans/horses numbered", 380,  50)
