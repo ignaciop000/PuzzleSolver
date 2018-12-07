@@ -89,22 +89,41 @@ def extract_edges(bw, corners):
 	#assert(corners[1]!=corners[0] && corners[0]!=corners[2] && corners[0]!=corners[3] && corners[1]!=corners[2] &&
 	#       corners[1]!=corners[3] && corners[2]!=corners[3]);
 	
-	edge1, normalized_edge1 = edge.create_edge(contour, sections[0], sections[1])
-	edge2, normalized_edge2 = edge.create_edge(contour, sections[1], sections[2])
-	edge3, normalized_edge3 = edge.create_edge(contour, sections[2], sections[3])
-	edge4, normalized_edge4 = edge.create_edge(contour, sections[3], len(contour))
-	return (normalized_edge1, normalized_edge2, normalized_edge3, normalized_edge4)
+	edge1 = edge.create_edge(contour, sections[0], sections[1])
+	edge2 = edge.create_edge(contour, sections[1], sections[2])
+	edge3 = edge.create_edge(contour, sections[2], sections[3])
+	edge4 = edge.create_edge(contour, sections[3], len(contour))
+	return (edge1, edge2, edge3, edge4)
+
+"""
+	Classify the type of piece
+"""
+def classify(edges):
+    count = 0
+    for i in range(4):
+        if(edges[i][3] == "OUTER_EDGE"):
+        	count += 1
+    
+    if(count == 0):
+        piece_type = "MIDDLE"
+    elif (count == 1):
+        piece_type = "FRAME"
+    elif (count == 2):
+        piece_type = "CORNER"
+    else:
+        raise Exception('Proble, found too many outer edges for this piece')
+    return piece_type
 
 
 def create_piece(color, black_and_white, estimated_piece_size):
-	corners = find_corners(estimated_piece_size, black_and_white);	
-	edges = extract_edges(black_and_white, corners.copy());
-	#classify();
-	processed_image = utils.draw_points(color, edges[0],[0,255,255])
-	processed_image = utils.draw_points(processed_image, edges[1],[255,0,255])
-	processed_image = utils.draw_points(processed_image, edges[2],[255,0,0])
-	processed_image = utils.draw_points(processed_image, edges[3],[0,255,0])
-	processed_image = utils.draw_points(processed_image, corners,[0,0,255])	
-	cv2.imshow("Processed",processed_image)
-	cv2.waitKey(0)	
+	corners = find_corners(estimated_piece_size, black_and_white)
+	edges = extract_edges(black_and_white, corners.copy())
+	piece_type = classify(edges)
+	#processed_image = utils.draw_points(color, edges[0],[0,255,255])
+	#processed_image = utils.draw_points(processed_image, edges[1],[255,0,255])
+	#processed_image = utils.draw_points(processed_image, edges[2],[255,0,0])
+	#processed_image = utils.draw_points(processed_image, edges[3],[0,255,0])
+	#processed_image = utils.draw_points(processed_image, corners,[0,0,255])	
+	#cv2.imshow("Processed",processed_image)
+	#cv2.waitKey(0)	
 	return (color, black_and_white, estimated_piece_size)

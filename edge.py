@@ -15,7 +15,7 @@ def classify(normalized_contour):
 	#the classification on that
 	minx  = 100000000
 	maxx = -100000000
-	for x, y in normalized_contour:
+	for x, y in normalized_contour[0]:
 		if(minx > x):
 			minx = x
 		if(maxx < x):
@@ -51,17 +51,17 @@ def normalize(cont):
 		#Apply roatation
 		new_x = math.cos(theta) * temp_point[0] - math.sin(theta) * temp_point[1]
 		new_y = math.sin(theta) * temp_point[0] + math.cos(theta) * temp_point[1]
-		ret_contour.append((new_x, new_y))
+		ret_contour.append([(new_x, new_y)])
 	
-	return np.asarray(ret_contour).astype(int)
+	return np.float32(np.asarray(ret_contour))
 
 def create_edge(contour, start, end):
 	#original
 	contour_edge = contour[start:end]
 	#Normalized contours are used for comparisons
 	normalized_contour = normalize(contour_edge)
-	#reverse_contour = contour_edge[::-1]
+	reverse_contour = contour_edge[::-1]
 	#same as normalized contour, but flipped 180 degrees
-	#reverse_normalized_contour = normalize(reverse_contour)
-	#type = classify(normalized_contour)
-	return (contour_edge, normalized_contour)
+	reverse_normalized_contour = normalize(reverse_contour)
+	edge_type = classify(normalized_contour)
+	return (contour_edge, normalized_contour, reverse_normalized_contour, edge_type)

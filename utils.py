@@ -88,7 +88,7 @@ def filter(to_filter, size):
 		morphology.append(image)
 	return morphology
 
-def draw_points(image, points, color = [0,0,255]):
+def draw_points(image, points, color = [0,0,255]):	
 	for p in points:
 		cv2.circle(image,(p[0][0],p[0][1]),3,color,-1)
-	return image;
+	return image
