@@ -45,8 +45,12 @@ def puzzle(folderpath, estimated_piece_size, thresh, filter = True):
 
 def fill_costs(pieces):
 	no_edges = len(pieces)*4
-"""
+	matches = []
 	for i in range(no_edges):
+		for j in range (i, no_edges):
+			matches.append((i, j,))
+"""
+	
 		for(int j=i; j<no_edges; j++){
 			match_score score;
 			score.edge1 =(int) i;
