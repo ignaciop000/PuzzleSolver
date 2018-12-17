@@ -4,6 +4,7 @@ import numpy as np
 import math
 import utils
 import piece
+import edge
 
 def extract_pieces(path, needs_filter, threshold, piece_size):
 	pieces = []
@@ -44,12 +45,25 @@ def puzzle(folderpath, estimated_piece_size, thresh, filter = True):
 	return pieces
 
 def fill_costs(pieces):
+	no_pieces = len(pieces);
+	matches = []
+	for p1 in range(no_pieces):
+		for p2 in range(p1+1, no_pieces):
+			edges1,typePiece1 = pieces[p1]
+			edges2,typePiece2 = pieces[p2]		
+			for e1 in range(4):
+				for e2 in range(4):
+					score = edge.compare2(edges1[e1], edges2[e2])
+					matches.append((p1*4+e1, p2*4+e2, score))
+	return sorted(matches, key=lambda b:b[2])
+	#print matches
+	"""
 	no_edges = len(pieces)*4
 	matches = []
 	for i in range(no_edges):
 		for j in range (i, no_edges):
+			score = pieces[i/4][i%4]
 			matches.append((i, j,))
-"""
 	
 		for(int j=i; j<no_edges; j++){
 			match_score score;

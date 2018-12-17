@@ -126,4 +126,4 @@ def create_piece(color, black_and_white, estimated_piece_size):
 	#processed_image = utils.draw_points(processed_image, corners,[0,0,255])	
 	#cv2.imshow("Processed",processed_image)
 	#cv2.waitKey(0)	
-	return (color, black_and_white, estimated_piece_size)
+	return (edges, piece_type)

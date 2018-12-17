@@ -65,3 +65,34 @@ def create_edge(contour, start, end):
 	reverse_normalized_contour = normalize(reverse_contour)
 	edge_type = classify(normalized_contour)
 	return (contour_edge, normalized_contour, reverse_normalized_contour, edge_type)
+
+"""
+This comparison iterates over every point in "this" contour,
+finds the closest point in "that" contour and sums those distances up.
+The end result is the sum divided by length of the 2 contours
+"""
+def compare2(edge1, edge2):
+    #Return large number if an impossible situation is happening
+    _,_,_,edge1_type = edge1
+    _,_,_,edge2_type = edge2
+    print edge1_type, edge2_type
+    if(edge1_type == "OUTER_EDGE" or edge2_type == "OUTER_EDGE"):
+    	return 100000000
+    if(edge1_type == edge2_type):
+    	return 100000000;
+	"""    	
+    cost=0
+    double total_length =  cv::arcLength(normalized_contour, false) + cv::arcLength(that.reverse_normalized_contour, false);
+    
+    for(std::vector<cv::Point2f>::iterator i = normalized_contour.begin(); i!=normalized_contour.end(); i++){
+        double min = 10000000;
+        for(std::vector<cv::Point2f>::iterator j = that.reverse_normalized_contour.begin(); j!=that.reverse_normalized_contour.end(); j++){
+            double dist = std::sqrt(std::pow(i->x - j->x,2) + std::pow(i->y - j->y, 2));
+            if(dist<min) min = dist;
+        }
+        
+        cost+=min;
+    }
+    return cost/total_length;
+    """ 
+    return 0
